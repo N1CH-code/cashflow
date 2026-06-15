@@ -2,7 +2,7 @@
 
 import { Gift } from 'lucide-react';
 import { GlassCard } from '@/components/ui/glass-card';
-import { cn } from '@/lib/utils';
+import { cn, ordinalSuffix } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
 interface SalaryCardProps {
@@ -65,7 +65,7 @@ export function SalaryCard({ daysUntilSalary, salaryDate, className }: SalaryCar
               : daysUntilSalary + ' ' + t('salaryCard.daysLeft')}
           </p>
           <p className="text-xs text-white/30">
-            {t('salaryCard.every')} {salaryDate}th {t('salaryCard.ofMonth')}
+            {t('salaryCard.every')} {ordinalSuffix(salaryDate)} {t('salaryCard.ofMonth')}
           </p>
         </div>
       </div>

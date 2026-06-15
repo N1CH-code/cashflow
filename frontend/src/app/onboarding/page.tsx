@@ -43,12 +43,19 @@ export default function OnboardingPage() {
     setStep((s) => Math.max(s - 1, 0));
   }, []);
 
+  const handleWelcomeContinue = async () => {
+    try {
+      await api.completeOnboardingStep(1);
+    } catch (e) { console.error('[onboarding] step 1 failed', e); }
+    goNext();
+  };
+
   const handleCurrencySelect = async (cur: string) => {
     setCurrency(cur);
     try {
       await api.completeOnboardingStep(2, { currency: cur });
       await api.setCurrency(cur);
-    } catch {}
+    } catch (e) { console.error('[onboarding] step 2 failed', e); }
     goNext();
   };
 
@@ -58,7 +65,7 @@ export default function OnboardingPage() {
     try {
       await api.completeOnboardingStep(3, { monthlyIncome: income, salaryDate: sDate });
       await api.setIncome(income, sDate);
-    } catch {}
+    } catch (e) { console.error('[onboarding] step 3 failed', e); }
     goNext();
   };
 
@@ -72,7 +79,7 @@ export default function OnboardingPage() {
       await api.completeOnboarding();
       updateUser({ onboardingComplete: true });
       goNext();
-    } catch {}
+    } catch (e) { console.error('[onboarding] step 4 failed', e); }
     setSubmitting(false);
   };
 
@@ -82,7 +89,7 @@ export default function OnboardingPage() {
 
   const renderStep = () => {
     switch (step) {
-      case 0: return <StepWelcome onNext={goNext} />;
+      case 0: return <StepWelcome onNext={handleWelcomeContinue} />;
       case 1: return <StepCurrency onSelect={handleCurrencySelect} selected={currency} />;
       case 2: return <StepIncome onSubmit={handleIncomeSubmit} initialIncome={monthlyIncome} initialDate={salaryDate} />;
       case 3: return <StepQuiz onSubmit={handleQuizSubmit} submitting={submitting} />;

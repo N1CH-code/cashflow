@@ -234,6 +234,7 @@ export class UsersService {
       profile: {
         name: user?.firstName ?? 'User',
         monthlyIncome: user?.monthlyIncome ?? 0,
+        salaryDate: user?.salaryDate ?? null,
       },
       budgetOverview: {
         totalIncome,

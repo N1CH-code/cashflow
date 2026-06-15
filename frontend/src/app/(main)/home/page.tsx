@@ -31,6 +31,7 @@ export default function HomePage() {
       const raw: any = await api.getDashboard();
       const bo = raw.budgetOverview ?? {};
       const dl = raw.dailyLimitInfo ?? {};
+      const salaryDate = raw.profile?.salaryDate ?? user?.salaryDate ?? null;
       setDashboard({
         budget: {
           totalIncome: bo.totalIncome ?? 0,
@@ -51,6 +52,7 @@ export default function HomePage() {
         recentTransactions: raw.recentTransactions ?? [],
         activeGoals: raw.activeGoals ?? [],
         prediction: raw.prediction ?? null,
+        salaryDate,
       });
     } catch (e) { console.error('[HomePage] fetchDashboard failed', e); }
   };
@@ -95,7 +97,7 @@ export default function HomePage() {
       <div className="grid grid-cols-2 gap-3">
         <SalaryCard
           daysUntilSalary={dashboard.daysUntilSalary}
-          salaryDate={user?.salaryDate || 1}
+          salaryDate={dashboard.salaryDate ?? user?.salaryDate ?? 1}
         />
         <DailyLimitCard
           limit={dashboard.dailyLimit.limit}

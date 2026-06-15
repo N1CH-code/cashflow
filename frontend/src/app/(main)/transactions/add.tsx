@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, ArrowRight, Sparkles,
@@ -9,30 +9,13 @@ import {
 import { Sheet } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { cn, getCategoryIcon } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import { useAppStore } from '@/stores/app.store';
 import type { TransactionType, Category, Currency } from '@/types';
 
 const quickAmounts = [5, 10, 20, 50, 100];
-
-const defaultCategories: { icon: string; name: string; color: string }[] = [
-  { icon: 'utensils-crossed', name: 'Food', color: '#F59E0B' },
-  { icon: 'car', name: 'Transport', color: '#3B82F6' },
-  { icon: 'shopping-cart', name: 'Shopping', color: '#EC4899' },
-  { icon: 'coffee', name: 'Coffee', color: '#8B5CF6' },
-  { icon: 'plane', name: 'Travel', color: '#06B6D4' },
-  { icon: 'popcorn', name: 'Entertainment', color: '#22C55E' },
-  { icon: 'heart-pulse', name: 'Health', color: '#EF4444' },
-  { icon: 'laptop', name: 'Tech', color: '#6366F1' },
-  { icon: 'book-open', name: 'Education', color: '#F97316' },
-  { icon: 'shirt', name: 'Clothing', color: '#A855F7' },
-  { icon: 'package', name: 'Bills', color: '#14B8A6' },
-  { icon: 'repeat', name: 'Subscription', color: '#6B7280' },
-  { icon: 'file-text', name: 'Documents', color: '#F59E0B' },
-  { icon: 'more-horizontal', name: 'Other', color: '#9CA3AF' },
-];
 
 interface AddTransactionSheetProps {
   isOpen: boolean;
@@ -50,6 +33,7 @@ export function AddTransactionSheet({ isOpen, onClose }: AddTransactionSheetProp
   const preferredCurrency = useAppStore((s) => s.preferredCurrency);
   const [type, setType] = useState<TransactionType>('EXPENSE');
   const [amount, setAmount] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<'today' | 'yesterday' | 'custom'>('today');
@@ -58,6 +42,10 @@ export function AddTransactionSheet({ isOpen, onClose }: AddTransactionSheetProp
   const [aiText, setAiText] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    api.getCategories().then(setCategories).catch(() => {});
+  }, []);
 
   const handleAmountInput = (val: string) => {
     if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) {
@@ -75,10 +63,13 @@ export function AddTransactionSheet({ isOpen, onClose }: AddTransactionSheetProp
     try {
       const result = await api.analyzeText(aiText);
       if (result.amount) setAmount(String(result.amount));
-      if (result.category) setSelectedCategory(result.category);
+      if (result.category) {
+        const matched = categories.find((c) => c.name === result.category || c.id === result.category);
+        setSelectedCategory(matched?.id ?? result.category);
+      }
       if (result.description) setDescription(result.description);
       if (result.type) setType(result.type);
-    } catch {}
+    } catch (e) { console.error('[AddTransaction] AI analyze failed', e); }
     setAiLoading(false);
     setAiMode(false);
     setAiText('');
@@ -104,7 +95,7 @@ export function AddTransactionSheet({ isOpen, onClose }: AddTransactionSheetProp
       });
       onClose();
       reset();
-    } catch {}
+    } catch (e) { console.error('[AddTransaction] create failed', e); }
     setSubmitting(false);
   };
 
@@ -199,22 +190,23 @@ export function AddTransactionSheet({ isOpen, onClose }: AddTransactionSheetProp
         <div>
           <p className="mb-2 text-xs font-medium text-white/50 uppercase">{t('transactions.add.category')}</p>
           <div className="grid grid-cols-4 gap-2">
-            {defaultCategories.map((cat) => {
+            {categories.map((cat) => {
               const catKey = cat.name.toLowerCase();
               const catName = t(`categories.${catKey}`, cat.name);
+              const isSelected = selectedCategory === cat.id;
               return (
                 <button
-                  key={cat.name}
-                  onClick={() => setSelectedCategory(cat.name)}
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
                   className={cn(
                     'flex flex-col items-center gap-1 rounded-xl p-2 transition-all',
-                    selectedCategory === cat.name
+                    isSelected
                       ? 'bg-accent-ruby/20 border border-accent-ruby/30'
                       : 'bg-white/5 border border-transparent hover:bg-white/10',
                   )}
                 >
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: cat.color + '20' }}>
-                    <span role="img" className="text-sm">{cat.icon}</span>
+                    <span role="img" className="text-sm">{getCategoryIcon(cat.icon)}</span>
                   </span>
                   <span className="text-[10px] text-white/60 truncate w-full text-center">{catName}</span>
                 </button>

@@ -162,6 +162,7 @@ export interface DashboardData {
   aiTip: AIAdvice;
   activeGoals: Goal[];
   prediction?: AIPrediction;
+  salaryDate?: number | null;
 }
 
 export interface GamificationProfile {
