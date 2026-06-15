@@ -1,0 +1,482 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../backend/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Currency {
+  EUR
+  USD
+  GBP
+  RUB
+  UAH
+  PLN
+  CHF
+}
+
+enum UserRole {
+  USER
+  PREMIUM
+  MAX
+  ADMIN
+}
+
+enum FinancialType {
+  SAVER
+  INVESTOR
+  IMPULSIVE
+  RATIONALIST
+  ADVENTURER
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionSource {
+  MANUAL
+  AI_RECOGNITION
+  FAST_BUTTON
+  RECURRING
+  IMPORT
+}
+
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum GoalVisibility {
+  PRIVATE
+  SHARED
+  FAMILY
+}
+
+enum AchievementType {
+  STREAK_7
+  STREAK_30
+  FIRST_GOAL
+  SAVINGS_1000
+  FIRST_SAVING
+  NO_OVERRUN_MONTH
+  BUDGET_MASTER
+  ANALYTICS_PRO
+  FINANCIAL_GURU
+  SHARING_SOCIAL
+  REFERRAL_5
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  TRIAL
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  MAX
+}
+
+enum NotificationType {
+  BUDGET_ALERT
+  GOAL_MILESTONE
+  ACHIEVEMENT_UNLOCKED
+  AI_RECOMMENDATION
+  PAYMENT_REMINDER
+  WEEKLY_REPORT
+  MONTHLY_REPORT
+  REFERRAL_SIGNUP
+  LOAN_ADVICE
+  OVERSPEND_WARNING
+  SUBSCRIPTION_EXPIRY
+}
+
+model User {
+  id                String         @id @default(uuid())
+  telegramId        String         @unique
+  telegramUsername  String?
+  firstName         String?
+  lastName          String?
+  photoUrl          String?
+  languageCode      String         @default("en")
+
+  role              UserRole       @default(USER)
+  plan              SubscriptionPlan @default(FREE)
+
+  onboardingComplete Boolean       @default(false)
+  onboardingStep    Int            @default(0)
+
+  currency          Currency       @default(EUR)
+  monthlyIncome     Float?
+  salaryDate        Int?           @default(1)
+
+  financialType     FinancialType?
+  dailyLimit        Float?
+  financialScore    Int?           @default(0)
+  financialIQ       Int?           @default(0)
+  xp                Int            @default(0)
+  level             Int            @default(1)
+  streak            Int            @default(0)
+
+  trialStart        DateTime       @default(now())
+  trialEnd          DateTime?
+  subscriptionEnd   DateTime?
+
+  referralCode      String         @unique @default(uuid())
+  referredBy        String?
+  referralCount     Int            @default(0)
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  transactions      Transaction[]
+  budgets           Budget[]
+  goals             Goal[]
+  loans             Loan[]
+  subscriptions     Subscription[]
+  userSubscription  UserSubscription?
+  referrals         Referral[]     @relation("ReferralInviter")
+  referredUsers     Referral[]     @relation("ReferralReferee")
+  achievements      UserAchievement[]
+  notifications     Notification[]
+  aiReports         AIReport[]
+  settings          UserSettings?
+  dailyLimits       DailyLimit[]
+  userChallenges    UserChallenge[]
+  familyMembers     FamilyMember[]
+
+  @@map("users")
+}
+
+model UserSettings {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  aiEnabled         Boolean  @default(true)
+  notificationsEnabled Boolean @default(true)
+  darkMode          Boolean  @default(true)
+  language          String   @default("en")
+  weeklyReport      Boolean  @default(true)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("user_settings")
+}
+
+model Transaction {
+  id                String          @id @default(uuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId        String?
+  category          Category?       @relation(fields: [categoryId], references: [id])
+  type              TransactionType
+  source            TransactionSource @default(MANUAL)
+  amount            Float
+  currency          Currency
+  description       String?
+  note              String?
+  date              DateTime        @default(now())
+  isRecurring       Boolean         @default(false)
+  recurringId       String?
+  tags              String[]
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([userId, date])
+  @@index([userId, categoryId])
+  @@map("transactions")
+}
+
+model Category {
+  id                String        @id @default(uuid())
+  name              String
+  nameRu            String?
+  nameUk            String?
+  icon              String
+  color             String
+  isDefault         Boolean       @default(false)
+  sortOrder         Int           @default(0)
+  keywords          String?
+
+  transactions      Transaction[]
+  budgets           Budget[]
+
+  @@map("categories")
+}
+
+model Budget {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId        String?
+  category          Category?     @relation(fields: [categoryId], references: [id])
+  amount            Float
+  spent             Float         @default(0)
+  period            String        @default("monthly")
+  month             Int
+  year              Int
+  startDate         DateTime
+  endDate           DateTime
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([userId, month, year])
+  @@map("budgets")
+}
+
+model Goal {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  nameRu            String?
+  nameUk            String?
+  icon              String        @default("target")
+  color             String        @default("#8B5CF6")
+  targetAmount      Float
+  savedAmount       Float         @default(0)
+  status            GoalStatus    @default(ACTIVE)
+  visibility        GoalVisibility @default(PRIVATE)
+  deadline          DateTime?
+  completedAt       DateTime?
+
+  sharedWith        String[]
+  familyId          String?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([userId, status])
+  @@map("goals")
+}
+
+model Loan {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  totalAmount       Float
+  interestRate      Float
+  termMonths        Int
+  monthlyPayment    Float
+  paidAmount        Float         @default(0)
+  remainingAmount   Float
+  startDate         DateTime
+  isActive          Boolean       @default(true)
+
+  aiAnalysis        Json?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("loans")
+}
+
+model UserSubscription {
+  id                String              @id @default(uuid())
+  userId            String              @unique
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan              SubscriptionPlan
+  status            SubscriptionStatus  @default(TRIAL)
+  startDate         DateTime            @default(now())
+  endDate           DateTime?
+  autoRenew         Boolean             @default(true)
+  telegramStars     String?
+  telegramPaymentId String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@map("user_subscriptions")
+}
+
+model Subscription {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  amount            Float
+  currency          Currency      @default(EUR)
+  billingCycle      String        @default("monthly")
+  nextPayment       DateTime
+  category          String
+  isActive          Boolean       @default(true)
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("subscriptions")
+}
+
+model Referral {
+  id                String        @id @default(uuid())
+  inviterId         String
+  inviter           User          @relation("ReferralInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  refereeId         String        @unique
+  referee           User          @relation("ReferralReferee", fields: [refereeId], references: [id], onDelete: Cascade)
+  rewardType        String?
+  rewardClaimed     Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+
+  @@map("referrals")
+}
+
+model UserAchievement {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement       AchievementType
+  unlockedAt        DateTime      @default(now())
+
+  @@unique([userId, achievement])
+  @@map("user_achievements")
+}
+
+model Achievement {
+  id                String        @id @default(uuid())
+  type              AchievementType @unique
+  name              String
+  nameRu            String?
+  nameUk            String?
+  description       String
+  icon              String
+  xpReward          Int
+  sortOrder         Int           @default(0)
+
+  @@map("achievements")
+}
+
+model Challenge {
+  id            String           @id @default(uuid())
+  title         String
+  titleRu       String?
+  description   String
+  descriptionRu String?
+  icon          String           @default("trophy")
+  type          String           // SPENDING_LIMIT, SAVING_GOAL, STREAK, CATEGORY_LIMIT, CONSECUTIVE_DAYS, TRANSACTION_COUNT
+  goal          Json             // { amount?: number, category?: string, categoryId?: string, days?: number, transactions?: number }
+  xpReward      Int              @default(50)
+  startDate     DateTime?
+  endDate       DateTime?
+  isActive      Boolean          @default(true)
+  sortOrder     Int              @default(0)
+  createdAt     DateTime         @default(now())
+
+  userChallenges UserChallenge[]
+
+  @@map("challenges")
+}
+
+model UserChallenge {
+  id          String   @id @default(uuid())
+  userId      String
+  challengeId String
+  progress    Float    @default(0)
+  completed   Boolean  @default(false)
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@map("user_challenges")
+}
+
+model Family {
+  id         String         @id @default(uuid())
+  name       String
+  createdBy  String
+  inviteCode String         @unique
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  members    FamilyMember[]
+
+  @@map("families")
+}
+
+model FamilyMember {
+  id       String @id @default(uuid())
+  familyId String
+  userId   String
+  role     String @default("MEMBER") // OWNER, ADMIN, MEMBER
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, userId])
+  @@map("family_members")
+}
+
+model EducationArticle {
+  id          String   @id @default(uuid())
+  title       String
+  titleRu     String?
+  summary     String
+  summaryRu   String?
+  content     String
+  contentRu   String?
+  category    String   // BASICS, SAVING, INVESTING, BUDGETING, CREDIT
+  icon        String   @default("book-open")
+  readTime    Int      @default(5)
+  isPublished Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("education_articles")
+}
+
+model AIReport {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  content           Json
+  recommendations   Json?
+  createdAt         DateTime      @default(now())
+
+  @@index([userId, createdAt])
+  @@map("ai_reports")
+}
+
+model DailyLimit {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date              DateTime      @default(now())
+  limitAmount       Float
+  spentAmount       Float         @default(0)
+  remainingAmount   Float
+
+  @@unique([userId, date])
+  @@map("daily_limits")
+}
+
+model Notification {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              NotificationType
+  title             String
+  body              String
+  data              Json?
+  isRead            Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
