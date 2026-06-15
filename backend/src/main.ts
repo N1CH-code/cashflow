@@ -22,6 +22,11 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const port = config.get('PORT', 4000);
 
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.get('/health', (req: any, res: any) => {
+    res.status(200).json({ status: 'ok' });
+  });
+
   await app.listen(port);
   console.log(`CashFlow API running on port ${port}`);
 }
