@@ -24,7 +24,8 @@ export default function SplashPage() {
 
   useEffect(() => {
     const webApp = (window as any).Telegram?.WebApp;
-    setIsDev(!webApp?.initData && typeof window !== 'undefined' && window.location.hostname === 'localhost');
+    const noTelegram = !webApp?.initData;
+    setIsDev(noTelegram);
   }, []);
 
   useEffect(() => {
