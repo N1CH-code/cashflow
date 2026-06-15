@@ -1,103 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
-
-const questions = [
-  {
-    question: 'What do you do when you receive your salary?',
-    answers: [
-      { text: 'Immediately plan how to spend it all', value: 1 },
-      { text: 'Set aside savings first, then spend the rest', value: 4 },
-      { text: 'Pay bills, then see what\'s left', value: 3 },
-      { text: 'Invest a portion, save some, spend wisely', value: 5 },
-    ],
-  },
-  {
-    question: 'How often do you check your bank account balance?',
-    answers: [
-      { text: 'Once a month when bills are due', value: 1 },
-      { text: 'Once a week', value: 3 },
-      { text: 'Every day', value: 4 },
-      { text: 'Several times a day', value: 5 },
-    ],
-  },
-  {
-    question: 'When you see something you want but didn\'t plan to buy:',
-    answers: [
-      { text: 'Buy it immediately, YOLO!', value: 1 },
-      { text: 'Wait a few days to think about it', value: 3 },
-      { text: 'Check if I can afford it first', value: 4 },
-      { text: 'Never buy unplanned items', value: 5 },
-    ],
-  },
-  {
-    question: 'What\'s your approach to saving money?',
-    answers: [
-      { text: 'Save whatever is left at month end', value: 2 },
-      { text: 'Save a fixed amount every month', value: 4 },
-      { text: 'I don\'t save regularly', value: 1 },
-      { text: 'I save aggressively and invest', value: 5 },
-    ],
-  },
-  {
-    question: 'How do you feel about investing?',
-    answers: [
-      { text: 'Too risky, I avoid it', value: 2 },
-      { text: 'I invest in safe options only', value: 3 },
-      { text: 'I invest with moderate risk', value: 4 },
-      { text: 'I actively invest and embrace calculated risks', value: 5 },
-    ],
-  },
-  {
-    question: 'When an unexpected expense comes up:',
-    answers: [
-      { text: 'It\'s a crisis, I have no funds', value: 1 },
-      { text: 'I use my credit card and pay later', value: 2 },
-      { text: 'I have an emergency fund for this', value: 4 },
-      { text: 'I have multiple funds for different situations', value: 5 },
-    ],
-  },
-  {
-    question: 'How many bank accounts do you have?',
-    answers: [
-      { text: 'Just one checking account', value: 2 },
-      { text: 'A checking and a savings', value: 3 },
-      { text: 'Multiple accounts for different purposes', value: 4 },
-      { text: 'I use a whole financial ecosystem', value: 5 },
-    ],
-  },
-  {
-    question: 'Do you track your expenses?',
-    answers: [
-      { text: 'Never, I just spend freely', value: 1 },
-      { text: 'I check occasionally', value: 2 },
-      { text: 'I use an app to track everything', value: 4 },
-      { text: 'I categorize and analyze every expense', value: 5 },
-    ],
-  },
-  {
-    question: 'What would you do with an unexpected $1000?',
-    answers: [
-      { text: 'Go on a shopping spree', value: 1 },
-      { text: 'Pay some bills with it', value: 3 },
-      { text: 'Save half, spend half', value: 4 },
-      { text: 'Invest it all', value: 5 },
-    ],
-  },
-  {
-    question: 'How long could you survive without income?',
-    answers: [
-      { text: 'Less than a week', value: 1 },
-      { text: 'About a month', value: 2 },
-      { text: 'A few months', value: 4 },
-      { text: 'Over 6 months', value: 5 },
-    ],
-  },
-];
 
 interface StepQuizProps {
   onSubmit: (answers: number[]) => void;
@@ -105,9 +12,102 @@ interface StepQuizProps {
 }
 
 export function StepQuiz({ onSubmit, submitting }: StepQuizProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
+
+  const questions = useMemo(() => [
+    {
+      question: t('onboarding.quiz.q1'),
+      answers: [
+        { text: t('onboarding.quiz.q1a1'), value: 1 },
+        { text: t('onboarding.quiz.q1a2'), value: 4 },
+        { text: t('onboarding.quiz.q1a3'), value: 3 },
+        { text: t('onboarding.quiz.q1a4'), value: 5 },
+      ],
+    },
+    {
+      question: t('onboarding.quiz.q2'),
+      answers: [
+        { text: t('onboarding.quiz.q2a1'), value: 1 },
+        { text: t('onboarding.quiz.q2a2'), value: 3 },
+        { text: t('onboarding.quiz.q2a3'), value: 4 },
+        { text: t('onboarding.quiz.q2a4'), value: 5 },
+      ],
+    },
+    {
+      question: t('onboarding.quiz.q3'),
+      answers: [
+        { text: t('onboarding.quiz.q3a1'), value: 1 },
+        { text: t('onboarding.quiz.q3a2'), value: 3 },
+        { text: t('onboarding.quiz.q3a3'), value: 4 },
+        { text: t('onboarding.quiz.q3a4'), value: 5 },
+      ],
+    },
+    {
+      question: t('onboarding.quiz.q4'),
+      answers: [
+        { text: t('onboarding.quiz.q4a1'), value: 2 },
+        { text: t('onboarding.quiz.q4a2'), value: 4 },
+        { text: t('onboarding.quiz.q4a3'), value: 1 },
+        { text: t('onboarding.quiz.q4a4'), value: 5 },
+      ],
+    },
+    {
+      question: t('onboarding.quiz.q5'),
+      answers: [
+        { text: t('onboarding.quiz.q5a1'), value: 2 },
+        { text: t('onboarding.quiz.q5a2'), value: 3 },
+        { text: t('onboarding.quiz.q5a3'), value: 4 },
+        { text: t('onboarding.quiz.q5a4'), value: 5 },
+      ],
+    },
+    {
+      question: t('onboarding.quiz.q6'),
+      answers: [
+        { text: t('onboarding.quiz.q6a1'), value: 1 },
+        { text: t('onboarding.quiz.q6a2'), value: 2 },
+        { text: t('onboarding.quiz.q6a3'), value: 4 },
+        { text: t('onboarding.quiz.q6a4'), value: 5 },
+      ],
+    },
+    {
+      question: t('onboarding.quiz.q7'),
+      answers: [
+        { text: t('onboarding.quiz.q7a1'), value: 2 },
+        { text: t('onboarding.quiz.q7a2'), value: 3 },
+        { text: t('onboarding.quiz.q7a3'), value: 4 },
+        { text: t('onboarding.quiz.q7a4'), value: 5 },
+      ],
+    },
+    {
+      question: t('onboarding.quiz.q8'),
+      answers: [
+        { text: t('onboarding.quiz.q8a1'), value: 1 },
+        { text: t('onboarding.quiz.q8a2'), value: 2 },
+        { text: t('onboarding.quiz.q8a3'), value: 4 },
+        { text: t('onboarding.quiz.q8a4'), value: 5 },
+      ],
+    },
+    {
+      question: t('onboarding.quiz.q9'),
+      answers: [
+        { text: t('onboarding.quiz.q9a1'), value: 1 },
+        { text: t('onboarding.quiz.q9a2'), value: 3 },
+        { text: t('onboarding.quiz.q9a3'), value: 4 },
+        { text: t('onboarding.quiz.q9a4'), value: 5 },
+      ],
+    },
+    {
+      question: t('onboarding.quiz.q10'),
+      answers: [
+        { text: t('onboarding.quiz.q10a1'), value: 1 },
+        { text: t('onboarding.quiz.q10a2'), value: 2 },
+        { text: t('onboarding.quiz.q10a3'), value: 4 },
+        { text: t('onboarding.quiz.q10a4'), value: 5 },
+      ],
+    },
+  ], [locale]);
 
   const handleAnswer = (value: number) => {
     const newAnswers = [...answers, value];
@@ -137,7 +137,7 @@ export function StepQuiz({ onSubmit, submitting }: StepQuizProps) {
       </div>
 
       <p className="mb-1 text-xs font-medium text-white/30">
-        Question {currentQ + 1} of {questions.length}
+        {t('onboarding.quiz.step', 'Question {current} of {total}').replace('{current}', String(currentQ + 1)).replace('{total}', String(questions.length))}
       </p>
 
       <AnimatePresence mode="wait">

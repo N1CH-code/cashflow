@@ -71,9 +71,9 @@ export default function OnboardingPage() {
       setResult(quizResult);
       await api.completeOnboarding();
       updateUser({ onboardingComplete: true });
+      goNext();
     } catch {}
     setSubmitting(false);
-    goNext();
   };
 
   const handleFinish = () => {
@@ -106,7 +106,7 @@ export default function OnboardingPage() {
         </div>
 
         <p className="mb-6 text-center text-xs font-medium text-white/30">
-          Step {step + 1} of {TOTAL_STEPS}
+          {t('onboarding.stepIndicator', 'Step {current} of {total}').replace('{current}', String(step + 1)).replace('{total}', String(TOTAL_STEPS))}
         </p>
 
         <AnimatePresence mode="wait" custom={direction}>
